@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Навигатор экскурсии</title>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=a1fd8374-c6d1-4dbf-934e-bf99b14ccc00" type="text/javascript"></script>
+</head>
+<body>
+    <div id="map" style="width: 100%; height: 100vh;"></div>
+
+    <script type="text/javascript">
+        ymaps.ready(function () {
+            var map = new ymaps.Map("map", {
+                center: [55.7558, 37.6173], // Москва
+                zoom: 16,
+                controls: [] // Убираем кнопки управления
+            });
+
+            // Список точек маршрута
+            var waypoints = [
+                [55.7558, 37.6173], // Точка 1
+                [55.7588, 37.6200], // Точка 2
+                [55.7605, 37.6250]  // Точка 3
+            ];
+
+            // Добавление ключевых точек
+            var placemarks = waypoints.map(coords => new ymaps.Placemark(coords, {}, { preset: 'islands#redDotIcon' }));
+            placemarks.forEach(pm => map.geoObjects.add(pm));
+
+            // Строим маршрут с фиксированными точками
+            var route = new ymaps.multiRouter.MultiRoute({
+                referencePoints: waypoints, // Точки маршрута
+                params: { routingMode: 'pedestrian' } // Режим "пешеход"
+            }, { 
+                wayPointStartVisible: false, // Скрываем первую точку
+                wayPointFinishVisible: false, // Скрываем последнюю точку
+                boundsAutoApply: true // Автоматически подстраиваем карту под маршрут
+            });
+
+            map.geoObjects.add(route);
+
+            // Отслеживание местоположения пользователя
+            var userPlacemark = new ymaps.Placemark([0, 0], {}, { preset: 'islands#bluePersonIcon' });
+            map.geoObjects.add(userPlacemark);
+
+            function trackUserPosition() {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.watchPosition(function (position) {
+                        var userCoords = [position.coords.latitude, position.coords.longitude];
+                        userPlacemark.geometry.setCoordinates(userCoords);
+                        map.setCenter(userCoords, 16);
+                    }, function (error) {
+                        console.log("Ошибка геолокации:", error.message);
+                    }, { enableHighAccuracy: true });
+                } else {
+                    alert("Геолокация не поддерживается вашим браузером");
+                }
+            }
+
+            trackUserPosition();
+        });
+    </script>
+</body>
+</html>
